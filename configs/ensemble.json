@@ -1,0 +1,30 @@
+{
+  "project_root": "..",
+  "localizer": "../Models/localizer.pt",
+  "target_size": [
+    512,
+    512
+  ],
+  "models": [
+    {
+      "size": 256,
+      "group": "low",
+      "checkpoint": "../Models/best_model_256_noise_notebook_5_0.15.pth"
+    },
+    {
+      "size": 256,
+      "group": "low",
+      "checkpoint": "../Models/best_model_256_noise_notebook_7_0.10.pth"
+    },
+    {
+      "size": 512,
+      "group": "high",
+      "checkpoint": "../Models/best_model_512_noise_notebook_5_0.15.pth"
+    },
+    {
+      "size": 512,
+      "group": "high",
+      "checkpoint": "../Models/best_model_512_noise_notebook_7_0.10.pth"
+    }
+  ]
+}

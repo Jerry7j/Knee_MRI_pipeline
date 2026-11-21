@@ -1,0 +1,2 @@
+# Full research and demo environment. Install from this directory.
+-e .[volume,localization,app,dev]

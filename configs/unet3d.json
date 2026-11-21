@@ -1,0 +1,29 @@
+{
+  "project_root": "..",
+  "model_type": "3d",
+  "image_dir": "data/processed/volumes",
+  "mask_dir": "data/raw/annotations",
+  "split_path": "data/splits/volume_patient_split.json",
+  "output_dir": "outputs/unet3d",
+  "num_classes": 5,
+  "input_size": [
+    112,
+    224,
+    224
+  ],
+  "resize": true,
+  "blur_kernel": 0,
+  "blur_sigma": 0.15,
+  "batch_size": 4,
+  "epochs": 2,
+  "learning_rate": 0.0001,
+  "seed": 65,
+  "device": "auto",
+  "num_workers": 0,
+  "pretrained": false,
+  "mask_axis_order": [
+    0,
+    1,
+    2
+  ]
+}

@@ -1,0 +1,23 @@
+{
+  "project_root": "..",
+  "model_type": "2.5d",
+  "image_dir": "data/processed/images",
+  "mask_dir": "data/processed/masks",
+  "split_path": "data/splits/patient_split.json",
+  "output_dir": "outputs/noise_256_k7_s010",
+  "num_classes": 5,
+  "input_size": [
+    256,
+    256
+  ],
+  "resize": true,
+  "blur_kernel": 7,
+  "blur_sigma": 0.1,
+  "batch_size": 8,
+  "epochs": 30,
+  "learning_rate": 0.0001,
+  "seed": 65,
+  "device": "auto",
+  "num_workers": 0,
+  "pretrained": false
+}
