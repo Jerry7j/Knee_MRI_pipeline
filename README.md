@@ -4,6 +4,10 @@
 
 A Python pipeline for knee MRI cartilage and meniscus segmentation, with preprocessing, 2.5D/3D model training, independent evaluation, multi-resolution fusion, visualization, and interactive inference.
 
+## Implementation references
+
+This repository's implementation draws on the open-source project [pitthexai/Knee_MRI_Segmentation_2.5D](https://github.com/pitthexai/Knee_MRI_Segmentation_2.5D) and the paper [KneeXNet-2.5D: a clinically-oriented and explainable deep learning framework for MRI-based knee cartilage and meniscus segmentation](https://www.nature.com/articles/s44401-026-00072-5), published in *npj Health Systems*. We thank the authors for sharing their research methods and code.
+
 ## Project structure
 
 ```text
