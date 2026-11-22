@@ -4,6 +4,14 @@
 
 A Python pipeline for knee MRI cartilage and meniscus segmentation, with preprocessing, 2.5D/3D model training, independent evaluation, multi-resolution fusion, visualization, and interactive inference.
 
+## Research collaboration
+
+This project analyzes knee MRI data provided by Shanghai Longhua Hospital as part of a research collaboration. The analysis focuses on cartilage and meniscus segmentation.
+
+## Implementation references
+
+This repository's implementation draws on the open-source project [pitthexai/Knee_MRI_Segmentation_2.5D](https://github.com/pitthexai/Knee_MRI_Segmentation_2.5D) and the paper [KneeXNet-2.5D: a clinically-oriented and explainable deep learning framework for MRI-based knee cartilage and meniscus segmentation](https://www.nature.com/articles/s44401-026-00072-5), published in *npj Health Systems*. We thank the authors for sharing their research methods and code.
+
 ## Pipeline overview
 
 The figure illustrates the reference KneeXNet-2.5D workflow: annotation and YOLOv11 localization, three-slice inputs at multiple resolutions and Gaussian scales, U-Net segmentation, ensemble prediction, and entropy-based visualization.
@@ -153,11 +161,3 @@ python -m unittest discover -s tests -v
 ```
 
 See [tests/README.md](tests/README.md) for coverage. Tests requiring unavailable scientific dependencies are skipped. Full training and inference require imaging data and actual model weights. Git LFS pointers cannot be loaded as weights; use `knee-mri check` to inspect artifact status.
-
-## Research collaboration
-
-This project analyzes knee MRI data provided by Shanghai Longhua Hospital as part of a research collaboration. The analysis focuses on cartilage and meniscus segmentation.
-
-## Implementation references
-
-This repository's implementation draws on the open-source project [pitthexai/Knee_MRI_Segmentation_2.5D](https://github.com/pitthexai/Knee_MRI_Segmentation_2.5D) and the paper [KneeXNet-2.5D: a clinically-oriented and explainable deep learning framework for MRI-based knee cartilage and meniscus segmentation](https://www.nature.com/articles/s44401-026-00072-5), published in *npj Health Systems*. We thank the authors for sharing their research methods and code.

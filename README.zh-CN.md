@@ -4,6 +4,14 @@
 
 用于膝关节 MRI 软骨与半月板分割的 Python 项目，支持数据预处理、2.5D/3D 模型训练、独立测试、多分辨率融合、可视化和交互推理。
 
+## 合作背景
+
+本项目用于与上海龙华医院合作开展膝关节 MRI 数据分析。研究使用上海龙华医院提供的膝关节 MRI 数据，重点分析软骨与半月板分割。
+
+## 实现参考
+
+本仓库的实现参考了 [pitthexai/Knee_MRI_Segmentation_2.5D](https://github.com/pitthexai/Knee_MRI_Segmentation_2.5D) 开源项目，以及发表于 *npj Health Systems* 的论文 [KneeXNet-2.5D: a clinically-oriented and explainable deep learning framework for MRI-based knee cartilage and meniscus segmentation](https://www.nature.com/articles/s44401-026-00072-5)。感谢作者公开研究方法与代码。
+
 ## 流程概览
 
 下图展示参考方法 KneeXNet-2.5D 的整体流程：标注与 YOLOv11 定位、多分辨率和高斯尺度的三邻片输入、U-Net 分割、集成预测及基于熵的不确定性可视化。
@@ -153,11 +161,3 @@ python -m unittest discover -s tests -v
 ```
 
 测试范围见 [tests/README.md](tests/README.zh-CN.md)。科学计算依赖缺失时，对应测试显示 skipped。完整训练与推理需要可用影像数据和真实模型权重；Git LFS 指针不能作为权重加载，可通过 `knee-mri check` 检查文件状态。
-
-## 合作背景
-
-本项目用于与上海龙华医院合作开展膝关节 MRI 数据分析。研究使用上海龙华医院提供的膝关节 MRI 数据，重点分析软骨与半月板分割。
-
-## 实现参考
-
-本仓库的实现参考了 [pitthexai/Knee_MRI_Segmentation_2.5D](https://github.com/pitthexai/Knee_MRI_Segmentation_2.5D) 开源项目，以及发表于 *npj Health Systems* 的论文 [KneeXNet-2.5D: a clinically-oriented and explainable deep learning framework for MRI-based knee cartilage and meniscus segmentation](https://www.nature.com/articles/s44401-026-00072-5)。感谢作者公开研究方法与代码。
