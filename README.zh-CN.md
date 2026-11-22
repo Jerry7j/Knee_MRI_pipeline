@@ -36,6 +36,8 @@ Knee_MRI_pipeline/
 +-- tests/                     # Configuration, data, and numerical tests
 +-- data/                      # Raw data, processed data, and dataset splits
 +-- outputs/                   # Models, metrics, probabilities, and visualizations
++-- .python-version            # Python version for uv
++-- uv.lock                    # Resolved dependencies
 +-- pyproject.toml
 +-- requirements.txt
 ```
@@ -43,6 +45,75 @@ Knee_MRI_pipeline/
 四个核心模块分别是[数据](src/knee_mri/data/README.zh-CN.md)、[模型](src/knee_mri/models/README.zh-CN.md)、[运行流程](src/knee_mri/engine/README.zh-CN.md)和[可视化](src/knee_mri/visualization/README.zh-CN.md)。所有 Python 函数均有英文文档字符串，可通过编辑器悬停或 `help()` 查看。
 
 ## 安装
+
+### 环境与依赖明细
+
+| 环境项 | 要求 |
+| --- | --- |
+| Python | 项目支持 `>=3.10,<3.13`；uv 通过 `.python-version` 默认使用 **3.11** |
+| uv | 锁文件使用 **0.13.9** 生成并校验，建议使用新版 uv |
+| 默认后端 | 从 PyPI 安装 PyTorch **2.6.0**、torchvision **0.21.0** |
+| NVIDIA 后端 | 可选本地安装：PyTorch **2.6.0+cu124**、torchvision **0.21.0+cu124**；需要 Windows/Linux x86_64 和兼容的 NVIDIA 驱动 |
+| 构建依赖 | `setuptools>=68`、`wheel`，由构建工具按需安装 |
+
+下表完整列出 `pyproject.toml` 中直接声明的核心和可选依赖。锁定版本来自 **Python 3.11 / Windows** 的安装计划；其他支持的 Python 版本或系统可能选择 `uv.lock` 中的不同版本条目。
+
+| 功能组 | 依赖包 | 声明范围 | 锁定版本 | 用途 |
+| --- | --- | --- | --- | --- |
+| 核心 | numpy | `>=1.24,<3` | 2.4.6 | 切片、标签、概率数组和 NPY 数据 |
+| 核心 | Pillow | `>=10` | 13.0.0 | JPEG/PNG 图像读写 |
+| 核心 | torch | `==2.6.0` | 2.6.0 + 所选后端 | 网络训练、张量运算和推理 |
+| 核心 | torchvision | `==0.21.0` | 0.21.0 + 所选后端 | 图像变换与模型工具 |
+| 核心 | segmentation-models-pytorch | `>=0.4,<0.6` | 0.5.0 | 原有 ResNet34 U-Net |
+| 核心 | matplotlib | `>=3.7` | 3.11.2 | 分割可视化和训练曲线 |
+| 核心 | tqdm | `>=4.65` | 4.70.1 | 训练与评估进度显示 |
+| `volume` | monai | `>=1.3,<2` | 1.5.2 | 3D U-Net |
+| `volume` | nibabel | `>=5` | 5.5.0 | NIfTI 图像与标签读写 |
+| `volume`、`localization` | SimpleITK | `>=2.3` | 2.5.8 | DICOM 序列与三维体数据读写 |
+| `localization`、`app` | ultralytics | `>=8.3,<9` | 8.4.216 | YOLO ROI 定位 |
+| `localization` | PyYAML | `>=6` | 6.0.4 | YOLO 数据集配置 |
+| `app` | streamlit | `>=1.40,<2` | 1.67.0 | 交互推理界面 |
+| `app` | pydicom | `>=3` | 3.0.2 | DICOM 元信息读取 |
+| `app` | opencv-python | `>=4.8` | 5.1.0.95 | 图像处理和应用显示 |
+| `dev` | pytest | `>=7` | 9.2.0 | 可选测试运行器；unittest 属于 Python 标准库 |
+
+`uv.lock` 同时保存间接依赖及安装包哈希，包括 timm、huggingface-hub、safetensors、pandas、pyarrow，以及 Linux 下按后端选择的 NVIDIA 运行库，由 uv 随上层包自动安装。PFDNet 和 Res2Net 已包含在本仓库，直接使用 PyTorch，无需另装 PFDNet 包。
+
+不使用界面、只推理 DICOM 序列时，也应选择 `localization` 以安装 SimpleITK；NIfTI/3D 处理选择 `volume`。模型 `.pt`/`.pth` 权重和 MRI 数据需单独准备，uv 不会下载。使用这些预编译 PyTorch 安装包无需额外安装系统 CUDA Toolkit；CPU 模式不需要 CUDA。CUDA 12.4 仅适用于兼容的 NVIDIA 环境；macOS Apple Silicon 使用 PyPI 安装包，本项目尚未验证该平台。
+
+本次已校验锁文件，仅添加配置与说明，没有安装新环境；完整锁定依赖组合尚未执行应用测试。
+
+### 使用 uv（推荐）
+
+环境只由三个文件管理：`pyproject.toml` 声明依赖、`.python-version` 指定 Python 3.11、`uv.lock` 锁定解析后的版本，无需额外 uv 配置文件。需要安装时，在项目目录执行：
+
+```powershell
+python -m pip install --upgrade uv
+uv python install 3.11
+uv sync --locked --extra volume --extra localization --extra app --extra dev
+uv run --no-sync knee-mri check
+```
+
+只需 2.5D 训练时，使用 `uv sync --locked`。运行命令时无需手动激活 `.venv`，前面加上 `uv run --no-sync` 即可：
+
+```powershell
+uv run --no-sync knee-mri train --config configs/pfdnet_25d.json
+uv run --no-sync python -m unittest discover -s tests -v
+uv run --no-sync streamlit run apps/streamlit_app.py
+```
+
+默认从 PyPI 安装，是否支持 CUDA 取决于系统和安装的 PyTorch 构建版本。Windows/Linux x86_64 如需 CUDA 12.4 版，在同步环境**之后**按需执行：
+
+```powershell
+uv pip install --reinstall-package torch --reinstall-package torchvision torch==2.6.0 torchvision==0.21.0 --index-url https://download.pytorch.org/whl/cu124
+uv run --no-sync python -c "import torch; print(torch.__version__); print(torch.cuda.is_available())"
+```
+
+CUDA 替换属于本地选择，不由 `uv.lock` 锁定。后续使用 `uv run --no-sync` 保留该选择；再次执行 `uv sync` 后，如有需要重新运行 CUDA 安装命令。需要兼容的 NVIDIA 驱动，使用预编译安装包无需另外安装系统 CUDA Toolkit。
+
+修改依赖后执行 `uv lock`，将更新后的锁文件与 `pyproject.toml` 一起提交，`.venv` 保留本地。本次仅创建配置和说明，不安装环境。
+
+### 使用 pip
 
 使用 Python 3.10 或 3.11，在本目录执行：
 
