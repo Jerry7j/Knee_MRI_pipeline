@@ -37,7 +37,6 @@ Knee_MRI_pipeline/
 +-- data/                      # Raw data, processed data, and dataset splits
 +-- outputs/                   # Models, metrics, probabilities, and visualizations
 +-- .python-version            # Python version for uv
-+-- uv.lock                    # Resolved dependencies
 +-- pyproject.toml
 +-- requirements.txt
 ```
@@ -51,11 +50,11 @@ Run from the project directory:
 ```powershell
 python -m pip install --upgrade uv
 uv python install 3.11
-uv sync --locked --extra volume --extra localization --extra app --extra dev
+uv sync --extra volume --extra localization --extra app --extra dev
 uv run --no-sync knee-mri check
 ```
 
-Use `uv run --no-sync` before the commands below to run them in the project environment. Dependency definitions are in [pyproject.toml](pyproject.toml), with resolved versions in [uv.lock](uv.lock).
+Use `uv run --no-sync` before the commands below to run them in the project environment. Dependencies are defined in [pyproject.toml](pyproject.toml). `uv sync` generates a local `uv.lock`, which is excluded from Git; indirect dependency versions can differ between fresh installations.
 
 ## Data format
 

@@ -9,3 +9,6 @@ data/raw/*
 data/processed/*
 data/splits/*
 !data/**/README.md
+
+# Generated locally by uv sync
+uv.lock
