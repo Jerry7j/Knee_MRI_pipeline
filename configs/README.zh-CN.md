@@ -19,3 +19,5 @@ device=auto 自动选择 CPU/CUDA；Windows 默认 num_workers=0。pretrained=fa
 3D 的 mask_axis_order 是 nibabel 标签数组到 [D,H,W] 的轴排列，需依据数据设置。
 
 ensemble 每个模型指定 checkpoint、size 和 group（low/high）。概率组内平均后组间等权融合。checkpoint 和 localizer 默认指向 ../Models，可改为训练输出路径；localizer=null 用于已裁剪且对齐的体。训练配置与集成配置不能互换。
+
+`pfdnet_25d.json` 通过 `architecture=pfdnet`、`pfdnet_channels=32` 选择五类 PFDNet。`ensemble_pfdnet.json` 加载其训练权重。ensemble 每个模型可以设置 `architecture`（默认 `unet`）和 `pfdnet_channels`。PFDNet 支持 2.5D，示例不使用预训练权重。

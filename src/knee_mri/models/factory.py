@@ -1,21 +1,25 @@
-"""Factories for ResNet34 U-Net and MONAI 3D U-Net."""
-from ..common import require_artifact
+"""Factories for PFDNet, ResNet34 U-Net, and MONAI 3D U-Net."""
+from ..common import require_artifact, validate_architecture
 
 
 def build_model(config, pretrained=False):
     """Create a five-class segmentation architecture without loading its checkpoint.
 
     Args:
-        config: Configuration with model_type set to 2.5d or 3d.
+        config: model_type (2.5d/3d), architecture (unet/pfdnet), and optional pfdnet_channels.
         pretrained: Load ImageNet weights for the 2.5D ResNet34 encoder when True.
 
     Returns:
-        An SMP 2.5D U-Net or MONAI 3D UNet producing five-class logits.
+        PFDNet, an SMP 2.5D U-Net, or a MONAI 3D UNet producing five-class logits.
 
     Raises:
         ValueError: The model type is unsupported.
         ImportError: Required architecture dependencies are unavailable.
     """
+    architecture = validate_architecture({**config, "pretrained": pretrained or config.get("pretrained", False)})
+    if architecture == "pfdnet":
+        from .pfdnet import PFDNet
+        return PFDNet(channel=config.get("pfdnet_channels", 128), classes=5)
     if config["model_type"] == "2.5d":
         import segmentation_models_pytorch as smp
         return smp.Unet(encoder_name="resnet34", encoder_weights="imagenet" if pretrained else None, in_channels=3, classes=5)

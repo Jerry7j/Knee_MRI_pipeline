@@ -117,6 +117,27 @@ Training saves `best_model.pth`, `best.ckpt`, `last.ckpt`, CSV logs, and a JSON 
 
 Evaluation exports `metrics.json`, a per-sample `manifest.json`, predicted labels, and softmax probabilities. Use `--checkpoint <path>` to select weights, `--subset val` for validation, and `--no-probs` to disable probability exports. Dice/IoU are macro-averaged over classes 1 through 4, then averaged across samples. A class absent from both prediction and target receives a score of one.
 
+## PFDNet segmentation
+
+The author's [PFDNet implementation](src/knee_mri/models/pfdnet.py) is included with its Res2Net encoder and two parallel fusion decoding paths. Its output head now predicts five segmentation logits: background, femoral cartilage, tibial cartilage, patellar cartilage, and meniscus. Inputs remain three neighbouring MRI slices in the existing 2.5D pipeline.
+
+Set `"model_type": "2.5d"`, `"architecture": "pfdnet"`, and `"pfdnet_channels": 32` in the experiment configuration. The last option controls decoder width and must match during training and inference. Existing configurations default to U-Net. PFDNet also supports the variable-size workflow with padding to multiples of 32.
+
+```powershell
+knee-mri split --config configs/pfdnet_25d.json
+knee-mri train --config configs/pfdnet_25d.json
+knee-mri evaluate --config configs/pfdnet_25d.json
+knee-mri predict --config configs/ensemble_pfdnet.json --input data/raw/volume.npy --output outputs/pfdnet_inference
+```
+
+Configure the data paths and train MRI segmentation weights before prediction. The existing landmark weights and downloaded U-Net weights cannot be directly loaded into this five-class PFDNet model. No PFDNet pretrained weights are downloaded automatically. The original YOLO localizer is retained. Each model in the ensemble can select unet or pfdnet and use the existing resolution-group fusion.
+
+### PFDNet paper
+
+When using the PFDNet architecture, cite the author's paper, credit the paper and code sources, and retain the applicable copyright and attribution notices.
+
+Wu Z, Zhang R, Bai H, Ma J, Ma X, Zhu X. [Keypoint estimation of knee x-ray images using a parallel fusion decoding network](https://www.sciencedirect.com/science/article/abs/pii/S0968016022002101). *The Knee*.
+
 ## Multi-resolution fusion
 
 Train and evaluate each of the four noise configurations, then run:

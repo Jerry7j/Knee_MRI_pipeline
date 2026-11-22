@@ -1,0 +1,156 @@
+"""PFDNet adapted from Keypoint-code for MRI segmentation.
+
+Reference: Wu et al., Keypoint estimation of knee x-ray images using a parallel
+fusion decoding network. https://www.sciencedirect.com/science/article/abs/pii/S0968016022002101
+"""
+
+import torch
+import torch.nn as nn
+import torch.nn.functional as F
+from .res2net import res2net50_v1b_26w_4s
+
+
+class BasicConv2d(nn.Module):
+    def __init__(self, in_planes, out_planes, kernel_size, stride=1, padding=0, dilation=1):
+        """Configure a 2D convolution and batch normalization for the requested channel sizes and geometry."""
+        super(BasicConv2d, self).__init__()
+        self.conv = nn.Conv2d(in_planes, out_planes,
+                              kernel_size=kernel_size, stride=stride,
+                              padding=padding, dilation=dilation, bias=False)
+        self.bn = nn.BatchNorm2d(out_planes)
+        self.relu = nn.ReLU(inplace=True)
+
+    def forward(self, x):
+        """Return the batch-normalized convolution of an NCHW feature tensor."""
+        x = self.conv(x)
+        x = self.bn(x)
+        return x
+
+
+class RFB_modified(nn.Module):
+    def __init__(self, in_channel, out_channel):
+        """Build four branches with different receptive fields and a residual channel projection."""
+        super(RFB_modified, self).__init__()
+        self.relu = nn.ReLU(True)
+        self.branch0 = nn.Sequential(
+            BasicConv2d(in_channel, out_channel, 1),
+        )
+        self.branch1 = nn.Sequential(
+            BasicConv2d(in_channel, out_channel, 1),
+            BasicConv2d(out_channel, out_channel, kernel_size=(1, 3), padding=(0, 1)),
+            BasicConv2d(out_channel, out_channel, kernel_size=(3, 1), padding=(1, 0)),
+            BasicConv2d(out_channel, out_channel, 3, padding=3, dilation=3)
+        )
+        self.branch2 = nn.Sequential(
+            BasicConv2d(in_channel, out_channel, 1),
+            BasicConv2d(out_channel, out_channel, kernel_size=(1, 5), padding=(0, 2)),
+            BasicConv2d(out_channel, out_channel, kernel_size=(5, 1), padding=(2, 0)),
+            BasicConv2d(out_channel, out_channel, 3, padding=5, dilation=5)
+        )
+        self.branch3 = nn.Sequential(
+            BasicConv2d(in_channel, out_channel, 1),
+            BasicConv2d(out_channel, out_channel, kernel_size=(1, 7), padding=(0, 3)),
+            BasicConv2d(out_channel, out_channel, kernel_size=(7, 1), padding=(3, 0)),
+            BasicConv2d(out_channel, out_channel, 3, padding=7, dilation=7)
+        )
+        self.conv_cat = BasicConv2d(4 * out_channel, out_channel, 3, padding=1)
+        self.conv_res = BasicConv2d(in_channel, out_channel, 1)
+
+    def forward(self, x):
+        """Fuse the four branches and return activated features at the input spatial resolution."""
+        x0 = self.branch0(x)
+        x1 = self.branch1(x)
+        x2 = self.branch2(x)
+        x3 = self.branch3(x)
+        x_cat = self.conv_cat(torch.cat((x0, x1, x2, x3), 1))
+
+        x = self.relu(x_cat + self.conv_res(x))
+        return x
+
+
+class aggregation(nn.Module):
+    # dense aggregation, it can be replaced by other aggregation previous, such as DSS, amulet, and so on.
+    # used after MSF
+    def __init__(self, channel, classes):
+        """Set the shared feature width and build the layers that output one logit map per class."""
+        super(aggregation, self).__init__()
+        self.relu = nn.ReLU(True)
+
+        self.upsample = nn.Upsample(scale_factor=2, mode='bilinear', align_corners=True)
+        self.conv_upsample1 = BasicConv2d(channel, channel, 3, padding=1)
+        self.conv_upsample2 = BasicConv2d(channel, channel, 3, padding=1)
+        self.conv_upsample3 = BasicConv2d(channel, channel, 3, padding=1)
+        self.conv_upsample4 = BasicConv2d(channel, channel, 3, padding=1)
+        self.conv_upsample5 = BasicConv2d(2 * channel, 2 * channel, 3, padding=1)
+
+        self.conv_concat2 = BasicConv2d(2 * channel, 2 * channel, 3, padding=1)
+        self.conv_concat3 = BasicConv2d(3 * channel, 3 * channel, 3, padding=1)
+        self.conv4 = BasicConv2d(3 * channel, 3 * channel, 3, padding=1)
+        self.conv5 = nn.Conv2d(3 * channel, classes, 1)
+
+    def forward(self, x1, x2, x3):
+        """Fuse three equal-width feature maps ordered from coarse to fine.
+
+        Each map has twice the spatial resolution of the preceding map. Return
+        one logit map per class at the resolution of x3.
+        """
+        x1_1 = x1
+        x2_1 = self.conv_upsample1(self.upsample(x1)) * x2
+        x3_1 = self.conv_upsample2(self.upsample(self.upsample(x1))) \
+               * self.conv_upsample3(self.upsample(x2)) * x3
+
+        x2_2 = torch.cat((x2_1, self.conv_upsample4(self.upsample(x1_1))), 1)
+        x2_2 = self.conv_concat2(x2_2)
+
+        x3_2 = torch.cat((x3_1, self.conv_upsample5(self.upsample(x2_2))), 1)
+        x3_2 = self.conv_concat3(x3_2)
+
+        x = self.conv4(x3_2)
+        x = self.conv5(x)
+
+        return x
+
+
+class PFDNet(nn.Module):
+    """Res2Net encoder and shared decoder for segmentation logits."""
+    def __init__(self, channel=128, classes=5):
+        """Build the Res2Net encoder and shared decoder with the given width and class count."""
+        super(PFDNet, self).__init__()
+        self.resnet = res2net50_v1b_26w_4s()
+        self.rfb1_1 = RFB_modified(256, channel)
+        self.rfb2_1 = RFB_modified(512, channel)
+        self.rfb3_1 = RFB_modified(1024, channel)
+        self.rfb4_1 = RFB_modified(2048, channel)
+        self.agg1 = aggregation(channel, classes)
+
+
+    def forward(self, x):
+        """Predict segmentation logits from an NCHW batch of three neighbouring MRI slices.
+
+        Decode two overlapping groups of encoder stages, upsample their maps
+        to the padded input grid and crop back to the original size, and add the outputs.
+        """
+        if x.ndim != 4 or x.shape[1] != 3:
+            raise ValueError("PFDNet expects three neighbouring MRI slices [B,3,H,W]")
+        height, width = x.shape[-2:]
+        if min(height, width) < 1:
+            raise ValueError("Input spatial dimensions must be nonempty")
+        # Both decoder paths require successive feature grids to double.
+        x = F.pad(x, (0, (-width) % 32, 0, (-height) % 32))
+        x = self.resnet.maxpool(self.resnet.relu(self.resnet.bn1(self.resnet.conv1(x))))
+        x1 = self.resnet.layer1(x)
+        x2 = self.resnet.layer2(x1)
+        x3 = self.resnet.layer3(x2)
+        x4 = self.resnet.layer4(x3)
+
+        x1 = self.rfb1_1(x1)
+        x2 = self.rfb2_1(x2)
+        x3 = self.rfb3_1(x3)
+        x4 = self.rfb4_1(x4)
+
+        # Fuse both decoder scales on the input pixel grid.
+        coarse = F.interpolate(self.agg1(x4, x3, x2), scale_factor=8,
+                               mode='bilinear', align_corners=False)
+        fine = F.interpolate(self.agg1(x3, x2, x1), scale_factor=4,
+                             mode='bilinear', align_corners=False)
+        return (coarse + fine)[..., :height, :width]

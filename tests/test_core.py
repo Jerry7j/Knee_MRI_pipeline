@@ -78,8 +78,9 @@ class SplitTests(unittest.TestCase):
 class ConfigArtifactTests(unittest.TestCase):
     def test_all_experiment_configs_load(self):
         """Verify every training configuration loads with outputs inside the project."""
-        paths = [p for p in (PROJECT / "configs").glob("*.json") if p.stem != "ensemble"]
-        self.assertEqual(len(paths), 6)
+        paths = [p for p in (PROJECT / "configs").glob("*.json") if not p.stem.startswith("ensemble")]
+        self.assertEqual({p.stem for p in paths}, {"baseline_25d", "noise_256_k5_s015", "noise_256_k7_s010",
+                                                  "noise_512_k5_s015", "noise_512_k7_s010", "unet3d", "pfdnet_25d"})
         for path in paths:
             config = load_config(path)
             self.assertTrue(Path(config["image_dir"]).is_absolute())

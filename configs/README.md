@@ -14,8 +14,10 @@
 
 Training configurations define data and output paths through `image_dir`, `mask_dir`, `split_path`, and `output_dir`. Relative paths resolve against `project_root`. The four noise configurations share `patient_split.json`, with defaults of 30 epochs, batch=8, Adam lr=1e-4, and seed=65.
 
-`device=auto` selects CPU/CUDA automatically; Windows defaults to `num_workers=0`. `pretrained=false` disables ImageNet downloads; true enables pretrained 2.5D encoders. With `resize=false`, `input_size` does not resize images.
+`device=auto` selects CPU/CUDA automatically; Windows defaults to `num_workers=0`. `pretrained=false` disables ImageNet downloads; true enables the pretrained 2.5D U-Net encoder. PFDNet requires false. With `resize=false`, `input_size` does not resize images.
 
 For 3D data, `mask_axis_order` permutes the nibabel mask array into [D,H,W]. Set it to match the dataset.
 
 Each ensemble model specifies `checkpoint`, `size`, and `group` (low/high). Probabilities are averaged within groups, then equally across groups. Checkpoint and localizer paths default to `../Models` and can point to training outputs instead. Use `localizer=null` for cropped, aligned volumes. Training and ensemble configurations are not interchangeable.
+
+`pfdnet_25d.json` selects five-class PFDNet via `architecture=pfdnet` and `pfdnet_channels=32`. `ensemble_pfdnet.json` loads its trained checkpoint. Per-model ensemble fields accept `architecture` (default `unet`) and `pfdnet_channels`. Only 2.5D supports PFDNet; its example does not use pretrained weights.

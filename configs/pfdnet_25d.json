@@ -1,0 +1,25 @@
+{
+  "project_root": "..",
+  "model_type": "2.5d",
+  "image_dir": "data/processed/images",
+  "mask_dir": "data/processed/masks",
+  "split_path": "data/splits/patient_split.json",
+  "output_dir": "outputs/pfdnet_256",
+  "num_classes": 5,
+  "input_size": [
+    256,
+    256
+  ],
+  "resize": true,
+  "blur_kernel": 0,
+  "blur_sigma": 0.15,
+  "batch_size": 2,
+  "epochs": 30,
+  "learning_rate": 0.0001,
+  "seed": 65,
+  "device": "auto",
+  "num_workers": 0,
+  "pretrained": false,
+  "architecture": "pfdnet",
+  "pfdnet_channels": 32
+}

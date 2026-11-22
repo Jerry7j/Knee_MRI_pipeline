@@ -35,7 +35,9 @@ class EnsemblePredictor:
             if size <= 0 or size % 32 or spec["group"] not in ("low", "high"):
                 raise ValueError("Each model needs size divisible by 32 and group low/high")
             checkpoint = require_artifact(root / spec["checkpoint"])
-            model = build_model({"model_type": "2.5d"}).to(self.device)
+            model_config = {"model_type": "2.5d", "architecture": spec.get("architecture", "unet"),
+                            "pfdnet_channels": spec.get("pfdnet_channels", 128)}
+            model = build_model(model_config).to(self.device)
             load_weights(model, checkpoint, self.device)
             self.models.append((model.eval(), size, spec["group"]))
         if not self.models:

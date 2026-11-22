@@ -117,6 +117,27 @@ knee-mri evaluate --config configs/unet3d.json
 
 测试输出 `metrics.json`、逐样本 `manifest.json`、预测标签和 softmax 概率。`--checkpoint <path>` 指定权重，`--subset val` 选择验证集，`--no-probs` 关闭概率保存。Dice/IoU 对类别 1 至 4 宏平均，再按样本平均；预测和标签均为空的类别得分为 1。
 
+## PFDNet 分割
+
+加入作者的 [PFDNet 实现](src/knee_mri/models/pfdnet.py)，保留 Res2Net 编码器和两路并行融合解码结构，将输出层适配为背景、股骨软骨、胫骨软骨、髌骨软骨和半月板的 5 类分割 logits。输入仍为前、中、后三张 MRI 切片组成的 2.5D 数据。
+
+训练配置使用 `"model_type": "2.5d"`、`"architecture": "pfdnet"` 和 `"pfdnet_channels": 32`。后者设置解码器宽度，训练与推理必须保持一致。未指定 architecture 的现有配置继续使用 U-Net。PFDNet 也支持原有不缩放、补齐到 32 倍数的数据流程。
+
+```powershell
+knee-mri split --config configs/pfdnet_25d.json
+knee-mri train --config configs/pfdnet_25d.json
+knee-mri evaluate --config configs/pfdnet_25d.json
+knee-mri predict --config configs/ensemble_pfdnet.json --input data/raw/volume.npy --output outputs/pfdnet_inference
+```
+
+运行前请修改数据路径并训练 MRI 分割权重。现有关键点权重或已下载的 U-Net 权重不能直接加载到五类 PFDNet 分割模型。程序不会自动下载 PFDNet 预训练权重。YOLO 定位仍由原 localizer.pt 完成；集成配置的每个模型可分别选择 unet 或 pfdnet，并沿用原分辨率分组融合。
+
+### PFDNet 论文引用
+
+使用 PFDNet 架构时，请引用作者的论文，并注明论文与代码来源；保留相应版权和署名声明。
+
+Wu Z, Zhang R, Bai H, Ma J, Ma X, Zhu X. [Keypoint estimation of knee x-ray images using a parallel fusion decoding network](https://www.sciencedirect.com/science/article/abs/pii/S0968016022002101). *The Knee*.
+
 ## 多分辨率融合
 
 分别训练并测试四组 noise 配置，再执行：

@@ -58,6 +58,22 @@ def require_artifact(path):
     return path
 
 
+def validate_architecture(config):
+    """Validate model selection without importing scientific dependencies."""
+    architecture = config.get("architecture", "unet")
+    if architecture not in ("unet", "pfdnet"):
+        raise ValueError("architecture must be 'unet' or 'pfdnet'")
+    if architecture == "pfdnet":
+        if config.get("model_type") != "2.5d":
+            raise ValueError("PFDNet supports model_type '2.5d' only")
+        width = config.get("pfdnet_channels", 128)
+        if isinstance(width, bool) or not isinstance(width, int) or width <= 0:
+            raise ValueError("pfdnet_channels must be a positive integer")
+        if config.get("pretrained", False):
+            raise ValueError("PFDNet does not download pretrained weights; use pretrained=false")
+    return architecture
+
+
 def load_config(path):
     """Load an experiment configuration, resolve paths, and validate settings.
 
@@ -80,6 +96,7 @@ def load_config(path):
             config[key] = str((root / config[key]).resolve())
     if config.get("model_type") not in ("2.5d", "3d"):
         raise ValueError("model_type must be '2.5d' or '3d'")
+    validate_architecture(config)
     size = config.get("input_size", [])
     dimensions = 3 if config["model_type"] == "3d" else 2
     if len(size) != dimensions or any(not isinstance(n, int) or n <= 0 for n in size):

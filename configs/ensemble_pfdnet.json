@@ -1,0 +1,17 @@
+{
+  "project_root": "..",
+  "localizer": "../Models/localizer.pt",
+  "target_size": [
+    512,
+    512
+  ],
+  "models": [
+    {
+      "architecture": "pfdnet",
+      "pfdnet_channels": 32,
+      "size": 256,
+      "group": "low",
+      "checkpoint": "outputs/pfdnet_256/best_model.pth"
+    }
+  ]
+}

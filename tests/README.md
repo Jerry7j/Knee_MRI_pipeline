@@ -12,4 +12,4 @@ test_core.py uses only the standard library. It covers patient and repeat-visit 
 
 test_scientific.py uses synthetic data to check neighbor fallback, nearest-neighbor mask resizing, alignment errors, ignored padding, Dice/IoU, resolution-group weights, probability validation, and entropy. It requires NumPy, PyTorch, torchvision, and Pillow; unavailable dependencies cause explicit skips.
 
-Each test method has an English docstring describing its checks. Tests do not run full training or load actual MRI data or pretrained weights. Full MONAI, YOLO, DICOM, and application workflows require integration validation with the appropriate dependencies and data.
+Each test method has an English docstring describing its checks. test_pfdnet.py checks logits, gradients, configuration validation, checkpoint loading, one synthetic training epoch, evaluation, and multi-resolution prediction. Tests do not load actual MRI data or pretrained weights. Full MONAI, YOLO, DICOM, and application workflows require integration validation with the appropriate dependencies and data.
