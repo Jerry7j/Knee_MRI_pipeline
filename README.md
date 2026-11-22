@@ -44,48 +44,9 @@ Knee_MRI_pipeline/
 
 The four core modules are [data](src/knee_mri/data/README.md), [models](src/knee_mri/models/README.md), [execution](src/knee_mri/engine/README.md), and [visualization](src/knee_mri/visualization/README.md). All Python functions have English docstrings available through editor tooltips or `help()`.
 
-## Installation
+## Installation with uv
 
-### Environment and dependency inventory
-
-| Component | Requirement |
-| --- | --- |
-| Python | Package range: `>=3.10,<3.13`; uv default: **3.11** via `.python-version` |
-| uv | Lockfile generated and checked with **0.13.9**; use a current uv release |
-| Default backend | PyPI wheels for PyTorch **2.6.0** and torchvision **0.21.0** |
-| NVIDIA backend | Optional local install: PyTorch **2.6.0+cu124**, torchvision **0.21.0+cu124**; Windows/Linux x86_64 with a compatible NVIDIA driver |
-| Build backend | `setuptools>=68`, `wheel` (installed by the build frontend when needed) |
-
-The following table lists every direct runtime and optional dependency from `pyproject.toml`. The resolved versions shown are for **Python 3.11 on Windows**, based on the lockfile installation plan. Other supported Python/platform combinations can resolve to different entries recorded in `uv.lock`.
-
-| Feature | Package | Declared requirement | Locked version | Purpose |
-| --- | --- | --- | --- | --- |
-| Core | numpy | `>=1.24,<3` | 2.4.6 | Slice arrays, labels, probabilities, NPY files |
-| Core | Pillow | `>=10` | 13.0.0 | JPEG/PNG image IO |
-| Core | torch | `==2.6.0` | 2.6.0 + selected backend | Training, tensor operations, model inference |
-| Core | torchvision | `==0.21.0` | 0.21.0 + selected backend | Image transforms and model utilities |
-| Core | segmentation-models-pytorch | `>=0.4,<0.6` | 0.5.0 | Existing ResNet34 U-Net |
-| Core | matplotlib | `>=3.7` | 3.11.2 | Segmentation panels and learning curves |
-| Core | tqdm | `>=4.65` | 4.70.1 | Training/evaluation progress |
-| `volume` | monai | `>=1.3,<2` | 1.5.2 | 3D U-Net |
-| `volume` | nibabel | `>=5` | 5.5.0 | NIfTI image/label IO |
-| `volume`, `localization` | SimpleITK | `>=2.3` | 2.5.8 | DICOM series and volume IO |
-| `localization`, `app` | ultralytics | `>=8.3,<9` | 8.4.216 | YOLO ROI localization |
-| `localization` | PyYAML | `>=6` | 6.0.4 | YOLO dataset configuration |
-| `app` | streamlit | `>=1.40,<2` | 1.67.0 | Interactive inference UI |
-| `app` | pydicom | `>=3` | 3.0.2 | DICOM metadata inspection |
-| `app` | opencv-python | `>=4.8` | 5.1.0.95 | Image processing and application display |
-| `dev` | pytest | `>=7` | 9.2.0 | Optional test runner; unittest is in Python's standard library |
-
-`uv.lock` also records indirect dependencies and wheel hashes, including timm, huggingface-hub, safetensors, pandas, pyarrow, and the NVIDIA runtime packages selected on Linux. uv installs them through their parent packages. PFDNet and Res2Net are included in this repository and use PyTorch; no separate PFDNet package is required.
-
-For DICOM series inference without the UI, include `localization` (SimpleITK); for NIfTI/3D processing include `volume`. Model `.pt`/`.pth` files and MRI data are separate inputs and are not downloaded by uv. A system CUDA toolkit is not required for these prebuilt PyTorch wheels. CPU use requires no CUDA installation. Use CUDA 12.4 only on a compatible NVIDIA system; macOS Apple Silicon uses PyPI wheels and has not been validated here.
-
-The uv lockfile has been checked. This configuration update does not install a new environment; the complete locked dependency set has not been run through the application tests.
-
-### Using uv (recommended)
-
-Only three files define the environment: `pyproject.toml` lists dependencies, `.python-version` selects Python 3.11, and `uv.lock` records resolved versions. No separate uv configuration is needed. Run these commands from the project directory when you want to install the environment:
+Run from the project directory:
 
 ```powershell
 python -m pip install --upgrade uv
@@ -94,39 +55,7 @@ uv sync --locked --extra volume --extra localization --extra app --extra dev
 uv run --no-sync knee-mri check
 ```
 
-For only 2.5D training, use `uv sync --locked`. To run commands without activating `.venv`, prefix them with `uv run --no-sync`:
-
-```powershell
-uv run --no-sync knee-mri train --config configs/pfdnet_25d.json
-uv run --no-sync python -m unittest discover -s tests -v
-uv run --no-sync streamlit run apps/streamlit_app.py
-```
-
-The default installation uses PyPI wheels; CUDA availability depends on the platform and installed PyTorch build. If you need the CUDA 12.4 build on Windows/Linux x86_64, run this optional command **after** syncing:
-
-```powershell
-uv pip install --reinstall-package torch --reinstall-package torchvision torch==2.6.0 torchvision==0.21.0 --index-url https://download.pytorch.org/whl/cu124
-uv run --no-sync python -c "import torch; print(torch.__version__); print(torch.cuda.is_available())"
-```
-
-This CUDA override is a local choice and is not locked by `uv.lock`. Continue using `uv run --no-sync` to preserve it; after another `uv sync`, reapply the CUDA command if needed. A compatible NVIDIA driver is required; a system CUDA toolkit is not needed for the prebuilt wheels.
-
-After changing dependencies, run `uv lock` and commit the updated lockfile with `pyproject.toml`. `.venv` stays local. This update only creates configuration and documentation; it does not install an environment.
-
-### Using pip
-
-Use Python 3.10 or 3.11 and run these commands from this directory:
-
-```powershell
-python -m venv .venv
-.\.venv\Scripts\Activate.ps1
-python -m pip install --upgrade pip
-python -m pip install -e ".[volume,localization,app,dev]"
-knee-mri --help
-knee-mri check
-```
-
-For 2.5D training and evaluation only, install with `pip install -e .`. The `volume` extra enables 3D models, `localization` enables YOLO, and `app` enables the interactive application. `requirements.txt` installs all features. Choose a GPU build of PyTorch compatible with your CUDA environment.
+Use `uv run --no-sync` before the commands below to run them in the project environment. Dependency definitions are in [pyproject.toml](pyproject.toml), with resolved versions in [uv.lock](uv.lock).
 
 ## Data format
 
