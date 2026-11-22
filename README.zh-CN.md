@@ -36,7 +36,6 @@ Knee_MRI_pipeline/
 +-- tests/                     # Configuration, data, and numerical tests
 +-- data/                      # Raw data, processed data, and dataset splits
 +-- outputs/                   # Models, metrics, probabilities, and visualizations
-+-- .python-version            # Python version for uv
 +-- pyproject.toml
 +-- requirements.txt
 ```
@@ -50,7 +49,7 @@ Knee_MRI_pipeline/
 ```powershell
 python -m pip install --upgrade uv
 uv python install 3.11
-uv sync --extra volume --extra localization --extra app --extra dev
+uv sync --python 3.11 --extra volume --extra localization --extra app --extra dev
 uv run --no-sync knee-mri check
 ```
 
